@@ -1,11 +1,11 @@
 import "./globals.css"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Roboto_Mono } from "next/font/google"
 import { ThemeProvider } from "@/components/ui/theme-provider"
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Roboto_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Gymmy - Gym Management System",

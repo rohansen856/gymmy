@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: gymmi-mongo
+    restart: no
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+
+  # gymmi:
+  #   build: .
+  #   container_name: gymmi-app
+  #   restart: always
+  #   environment:
+  #     # The connection string uses the service name "mongo" as the hostname.
+  #     - DATABASE_URL=mongodb://mongo:27017/gymmi
+  #   depends_on:
+  #     - mongo
+  #   ports:
+  #     - "3000:3000" # Adjust this if your app uses a different port
+
+volumes:
+  mongo-data:

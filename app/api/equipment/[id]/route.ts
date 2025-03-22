@@ -1,70 +1,163 @@
-import { NextResponse } from 'next/server';
-import { getEquipmentById } from '@/lib/data';
+import { NextResponse } from "next/server"
+import { Prisma, PrismaClient } from "@prisma/client"
+
+// Initialize Prisma client
+const prisma = new PrismaClient()
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
-  const equipment = getEquipmentById(id);
-  
-  if (!equipment) {
+  try {
+    console.log(params)
+    // Get equipment by ID from the database
+    const equipment = await prisma.equipment.findUnique({
+      where: {
+        id: params.id,
+      },
+    })
+
+    if (!equipment) {
+      return NextResponse.json(
+        { error: "Equipment not found" },
+        { status: 404 }
+      )
+    }
+
+    // Get all bookings for this equipment
+    const bookings = await prisma.booking.findMany({
+      where: {
+        equipment: {
+          id: params.id,
+        },
+      },
+      orderBy: {
+        startTime: "asc",
+      },
+    })
+
+    return NextResponse.json({
+      equipment,
+      bookings,
+    })
+  } catch (error) {
+    console.error("Error fetching equipment:", error)
     return NextResponse.json(
-      { error: 'Equipment not found' },
-      { status: 404 }
-    );
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  } finally {
+    // Disconnect Prisma client to prevent connection leaks
+    await prisma.$disconnect()
   }
-  
-  return NextResponse.json(equipment);
 }
 
+// Handle PUT request to update equipment
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = params.id;
-    const equipment = getEquipmentById(id);
-    
-    if (!equipment) {
+    const body = await request.json()
+
+    // Check if equipment exists before updating
+    const existingEquipment = await prisma.equipment.findUnique({
+      where: {
+        id: params.id,
+      },
+    })
+
+    if (!existingEquipment) {
       return NextResponse.json(
-        { error: 'Equipment not found' },
+        { error: "Equipment not found" },
         { status: 404 }
-      );
+      )
     }
-    
-    const updatedData = await request.json();
-    
-    // In a real app, this would update the database
-    const updatedEquipment = {
-      ...equipment,
-      ...updatedData,
-    };
-    
-    return NextResponse.json(updatedEquipment);
+
+    // Validate that we're not changing the equipment to a status that conflicts with active bookings
+    if (body.status === "maintenance" || body.status === "out-of-order") {
+      // Check if there are any confirmed or pending bookings
+      const activeBookings = await prisma.booking.findMany({
+        where: {
+          equipmentId: params.id,
+          status: { in: ["confirmed", "pending"] },
+          endTime: { gt: new Date() }, // Only consider bookings that haven't ended yet
+        },
+      })
+
+      if (activeBookings.length > 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Cannot change equipment status. There are active bookings for this equipment.",
+            conflictingBookings: activeBookings,
+          },
+          { status: 409 }
+        )
+      }
+    }
+
+    // Update the equipment
+    const equipment = await prisma.equipment.update({
+      where: {
+        id: params.id,
+      },
+      data: body,
+    })
+
+    return NextResponse.json({
+      success: true,
+      equipment,
+    })
   } catch (error) {
+    console.error("Error updating equipment:", error)
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError)
+      if (error.code === "P2025") {
+        // Handle specific Prisma errors
+        return NextResponse.json(
+          { error: "Equipment not found" },
+          { status: 404 }
+        )
+      }
+
     return NextResponse.json(
-      { error: 'Failed to update equipment' },
+      { error: "Internal server error" },
       { status: 500 }
-    );
+    )
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
+// Handle DELETE request to remove equipment
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
-  const equipment = getEquipmentById(id);
-  
-  if (!equipment) {
+  try {
+    // First, delete all bookings for this equipment
+    await prisma.booking.deleteMany({
+      where: {
+        equipmentId: params.id,
+      },
+    })
+
+    // Then, delete the equipment
+    await prisma.equipment.delete({
+      where: {
+        id: params.id,
+      },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Error deleting equipment:", error)
     return NextResponse.json(
-      { error: 'Equipment not found' },
-      { status: 404 }
-    );
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  } finally {
+    await prisma.$disconnect()
   }
-  
-  // In a real app, this would delete from the database
-  
-  return NextResponse.json({ success: true });
 }

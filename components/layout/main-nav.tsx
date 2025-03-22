@@ -14,6 +14,7 @@ import {
   Settings,
   Menu,
   X,
+  Sandwich,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -64,6 +65,16 @@ const navItems: NavItem[] = [
     title: "Hall of Fame",
     href: "/hall-of-fame",
     icon: <Award className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "Deadlift predictor",
+    href: "/predictions/deadlift",
+    icon: <Dumbbell className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "Diet plannar",
+    href: "/predictions/diet",
+    icon: <Sandwich className="mr-2 h-4 w-4" />,
   },
   {
     title: "Admin",
