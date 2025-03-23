@@ -1,8 +1,6 @@
+import prisma from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import { NextResponse } from "next/server"
-import { Prisma, PrismaClient } from "@prisma/client"
-
-// Initialize Prisma client
-const prisma = new PrismaClient()
 
 export async function GET(
   request: Request,
