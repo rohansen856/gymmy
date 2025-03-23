@@ -73,12 +73,12 @@ const navItems: NavItem[] = [
     icon: <Dumbbell className="mr-2 h-4 w-4" />,
   },
   {
-    title: "Diet plannar",
+    title: "Schedule",
     href: "/schedule",
     icon: <Clock className="mr-2 h-4 w-4" />,
   },
   {
-    title: "Schedule plannar",
+    title: "Diet",
     href: "/predictions/diet",
     icon: <Sandwich className="mr-2 h-4 w-4" />,
   },
