@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Sandwich,
+  Clock,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -73,6 +74,11 @@ const navItems: NavItem[] = [
   },
   {
     title: "Diet plannar",
+    href: "/schedule",
+    icon: <Clock className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "Schedule plannar",
     href: "/predictions/diet",
     icon: <Sandwich className="mr-2 h-4 w-4" />,
   },

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import axios from "axios"
 import { motion } from "framer-motion"
-import { Dumbbell, CheckCircle, ArrowRight } from "lucide-react"
+import { Dumbbell, CheckCircle, ArrowRight, AlertTriangle } from "lucide-react"
 import Confetti from "react-confetti"
 import { useWindowSize } from "react-use"
 
@@ -37,6 +37,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import CountUp from "react-countup"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 // Form schema with validation
 const formSchema = z.object({
@@ -74,6 +76,9 @@ const formSchema = z.object({
     })
     .min(0, { message: "Best bench press must be at least 0kg." })
     .max(350, { message: "Best bench press must be less than 350kg." }),
+  safetyAcknowledged: z.boolean().refine((value) => value === true, {
+    message: "You must acknowledge the safety disclaimer to continue.",
+  }),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -94,6 +99,7 @@ export default function DeadliftPredictorPage() {
       BodyweightKg: undefined,
       BestSquatKg: undefined,
       Bestbenchkg: undefined,
+      safetyAcknowledged: false,
     },
   })
 
@@ -163,6 +169,20 @@ export default function DeadliftPredictorPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
+            <Alert className="mb-6 border-red-600 bg-secondary text-red-700">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <AlertTitle className="text-red-600 font-bold">
+                Safety Warning
+              </AlertTitle>
+              <AlertDescription className="text-red-700">
+                This prediction is intended for trained individuals only. If you
+                are not a professional or experienced lifter, attempting your
+                predicted max could result in serious injury. The gym and this
+                application take no responsibility for any injuries that may
+                occur from attempting these weights.
+              </AlertDescription>
+            </Alert>
+
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -298,7 +318,38 @@ export default function DeadliftPredictorPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <FormField
+                  control={form.control}
+                  name="safetyAcknowledged"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 border p-4 rounded-md border-red-300 bg-secondary">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-red-600 font-medium">
+                          Safety Acknowledgment
+                        </FormLabel>
+                        <p className="text-xs text-red-600">
+                          I understand that this prediction is only for trained
+                          individuals and that the gym will not take any
+                          responsibility for injuries that may occur from
+                          attempting these weights.
+                        </p>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || !form.watch("safetyAcknowledged")}
+                >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
@@ -337,7 +388,11 @@ export default function DeadliftPredictorPage() {
                 </div>
                 <p className="mt-4 text-muted-foreground">
                   This is an estimate based on your current stats. With proper
-                  training and technique, you can achieve this goal!
+                  training and technique, you can work toward this goal safely.
+                </p>
+                <p className="mt-2 text-sm text-red-600 font-medium">
+                  Remember: Always use proper form and consider working with a
+                  professional trainer before attempting maximal lifts.
                 </p>
               </motion.div>
             )}
