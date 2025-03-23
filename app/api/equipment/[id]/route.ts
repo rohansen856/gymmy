@@ -110,15 +110,6 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating equipment:", error)
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError)
-      if (error.code === "P2025") {
-        // Handle specific Prisma errors
-        return NextResponse.json(
-          { error: "Equipment not found" },
-          { status: 404 }
-        )
-      }
-
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
